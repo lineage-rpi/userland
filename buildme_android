@@ -1,0 +1,42 @@
+#!/bin/bash
+
+BUILDTYPE=Release
+ARM64=ON
+CMAKE_TOOLCHAIN_FILE=~/Android/Ndk/android-ndk-r23c/build/cmake/android.toolchain.cmake
+
+ANDROID_ABI=arm64-v8a
+ANDROID_TOOLCHAIN=clang
+ANDROID_ARM_NEON=OFF
+ANDROID_NATIVE_API_LEVEL=31
+
+if [ "$1" = "--debug" ]; then
+  BUILDTYPE=Debug
+  shift
+fi
+
+if [ "$1" = "--arm" ]; then
+  ANDROID_ABI=armeabi-v7a
+  ANDROID_ARM_NEON=ON
+  ARM64=OFF
+  shift
+fi
+
+BUILDSUBDIR=`echo $BUILDTYPE | tr '[A-Z]' '[a-z]'`
+
+mkdir -p build/arm-linux/$BUILDSUBDIR
+pushd build/arm-linux/$BUILDSUBDIR
+
+cmake \
+-DCMAKE_BUILD_TYPE=$BUILDTYPE \
+-DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE \
+-DANDROID_ABI=$ANDROID_ABI \
+-DANDROID_TOOLCHAIN=$ANDROID_TOOLCHAIN \
+-DANDROID_ARM_NEON=$ANDROID_ARM_NEON \
+-DANDROID_NATIVE_API_LEVEL=$ANDROID_NATIVE_API_LEVEL \
+-DARM64=$ARM64 \
+../../../
+
+make -j `nproc`
+make install DESTDIR=./
+
+popd
